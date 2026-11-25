@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: write
+  pages: write
 
 concurrency:
   group: etf-data-update
@@ -89,6 +90,12 @@ jobs:
             git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "发布数据快照：${latest}"
             git push origin HEAD:gh-pages
           fi
+
+      - name: Request GitHub Pages build
+        if: steps.update.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST "repos/${{ github.repository }}/pages/builds"
 
       - name: Fail when update failed
         if: steps.update.outcome != 'success'
