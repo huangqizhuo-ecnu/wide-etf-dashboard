@@ -69,6 +69,7 @@ jobs:
             echo "没有变化"
           else
             git commit -m "更新运行记录 $(date -u +%Y-%m-%dT%H:%MZ)"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
 
