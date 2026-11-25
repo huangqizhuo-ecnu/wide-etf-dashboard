@@ -18,6 +18,9 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      PYTHONIOENCODING: utf-8
+      LANG: C.UTF-8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
