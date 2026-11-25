@@ -21,7 +21,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 ROOT = Path(__file__).resolve().parent
 CHINA = timezone(timedelta(hours=8))
-START = date(2026, 1, 1)
+START = date(2024, 10, 15)
 SSE = 'https://www.sse.com.cn/market/funddata/volumn/etfvolumn/'
 SZSE = 'https://www.szse.cn/market/fund/volume/etf/index.html'
 INDICES = [
@@ -316,7 +316,7 @@ def main():
     yesterday = datetime.now(CHINA).date() - timedelta(days=1)
     end = args.through or yesterday
     if end < START or end > yesterday:
-        parser.error('截止日须在 2026-01-01 与北京时间昨天之间')
+        parser.error(f'截止日须在 {START} 与北京时间昨天之间')
     if args.rebuild and args.site:
         parser.error('重建先输出本地快照，线上只允许追加交易日')
     if args.cache_dir:
