@@ -3,14 +3,21 @@
 静态网页 + 同源只读 JSON + 服务器定时更新脚本。访客用大陆普通宽带或手机流量即可打开，
 不需要代理、ChatGPT 账号、iFinD 账号，也不加载任何海外前端资源。
 
-- 数据截至：**2026-11-24**，共 **215 个交易日**（2026-01-05 起）。
-- 默认展示最新交易日；日期可选 **2026-01-01 至北京时间当天**；休市日映射到此前最近有数据的交易日。
+- 数据截至：**2026-11-24**，共 **514 个交易日**（2024-10-15 起）。
+- 默认展示最新交易日；日期可选 **2024-10-15 至北京时间当天**；休市日映射到此前最近有数据的交易日。
 - 图表为 56 个自然日窗口，只画实际交易日；周五刻度显示完整日期；查询日用紫色空心圆和紫色粗体日期，图内无竖线。
 - 八张图：沪深300、上证50、创业板指、科创50、中证A500、中证500、中证1000、中证2000。
+- 页面底部有“数据来源”和“风险提示”两段说明（仅为客观数据展示、仅供内部使用、不构成投资建议）。
 
 在线预览（GitHub Pages，静态快照）：**https://huangqizhuo-ecnu.github.io/wide-etf-dashboard/**
 
 ![桌面 1280px](docs/screenshots/dashboard-desktop-1280.png)
+
+### 历史范围说明
+
+- **2024-10-15** 是八个指数都有 ETF 份额的最早交易日，因此作为完整八图的历史起点。
+- 深交所 ETF 月报最早覆盖 2017-01，上交所 ETF 份额可查更早（2013 年已有数据）；但科创50 ETF 2020-09 上市、中证2000 ETF 2023-09 上市、中证A500 ETF 2024-10-15 才首次出现在交易所份额报表。
+- 若要继续往 2017 年回溯，需要允许部分指数在尚未发行 ETF 的日期显示“当时尚无 ETF”，属于前端空值展示改造；当前版本优先保证八张图口径一致。
 
 ## 本地运行
 
@@ -60,7 +67,7 @@ python update_daily.py --dry-run
 | --- | --- |
 | `public/` | 部署到 Web 根目录的静态文件（`index.html`、`style.css`、`dashboard.js`、`window.js`） |
 | `public/api/history.json` | 对外只读 JSON，由 `update_daily.py` 原子发布；不含内部字段 |
-| `data/history.json` | 已验收的初始历史快照（215 个交易日，来自原项目） |
+| `data/history.json` | 历史快照（514 个交易日，2024-10-15 至 2026-11-24；原 2026 快照保留在 `data/backups/`） |
 | `data/index-members.json` | 已验证的历史 ETF 产品代码，防止当前名单漏掉历史产品 |
 | `data/current/history.json` | 内部工作快照，保留 `last_members`，只由更新程序读写 |
 | `data/backups/` | 对外 JSON 的历史版本，用于回滚 |
@@ -78,21 +85,21 @@ python update_daily.py --dry-run
 
 ```powershell
 python scripts/serve.py                                  # 本地看板
-node tests/verify_frontend.mjs                           # 5359 项逻辑与数据检查
+node tests/verify_frontend.mjs                           # 12560 项逻辑与数据检查
 node tests/browser-check.mjs                             # 8 张 Canvas 渲染、紫色标记、休市映射、320px 布局
 python tests/test_update_daily.py                        # 21 项更新/发布流程测试
 ```
 
-- `tests/verify_frontend.mjs`：交接文档四个查询样例（2026-01-01→32 点、2026-07-24→40 点、2026-11-07→2026-11-06→35 点、2026-11-24→35 点）全部一致；全部 215 个交易日窗口自洽；周五刻度全部为完整日期。
-- `tests/browser-check.mjs`：真实 Chrome 渲染 8 张图；最新日与休市日（2026-10-03→2026-09-30）都有紫色空心圆；图内无竖线；悬停提示显示实际交易日期与两项数值；320px 单列且无横向溢出。截图见 `docs/screenshots/`。
+- `tests/verify_frontend.mjs`：扩展后的查询样例（2024-10-14→2024-10-15、2025-01-02→36 点、2026-01-01→2025-12-31→38 点、2026-07-24→40 点、2026-11-07→2026-11-06→35 点、2026-11-24→35 点）全部一致；全部 514 个交易日窗口自洽；周五刻度全部为完整日期。
+- `tests/browser-check.mjs`：真实 Chrome 渲染 8 张图；最新日与休市日（2026-10-03→2026-09-30）都有紫色空心圆；图内无竖线；悬停提示显示实际交易日期与两项数值；页面底部显示“数据来源”和“风险提示”；320px 单列且无横向溢出。截图见 `docs/screenshots/`。
 - `python tests/test_update_daily.py`：只追加、拒绝改写历史、拒绝周末/乱序/负规模/错误变动、并发锁、残留锁回收、源站失败保留旧版、一次补齐漏跑交易日、重复执行不重复追加，全部通过。
 - 公开源直连（关闭代理）：2026-11-21 快照补齐到 2026-11-24 的实测结果与已验收快照逐值一致（2026-11-24 完全相同，2026-11-23 最大差 1e-8，属 8 位小数舍入）。
 
 ### 界面截图
 
-| 桌面 1280px | 休市日查询 | 手机 320px |
-| --- | --- | --- |
-| ![桌面](docs/screenshots/dashboard-desktop-1280.png) | ![休市日](docs/screenshots/dashboard-holiday-2026-10-03.png) | ![手机](docs/screenshots/dashboard-mobile-320.png) |
+| 桌面 1280px | 期初 2024-10-15 | 休市日查询 | 手机 320px |
+| --- | --- | --- | --- |
+| ![桌面](docs/screenshots/dashboard-desktop-1280.png) | ![期初](docs/screenshots/dashboard-early-2024-10-15.png) | ![休市日](docs/screenshots/dashboard-holiday-2026-10-03.png) | ![手机](docs/screenshots/dashboard-mobile-320.png) |
 
 ## 数据口径
 
@@ -111,7 +118,7 @@ python tests/test_update_daily.py                        # 21 项更新/发布�
 - 工作流：`.github/workflows/update-data.yml`
 - 触发：北京时间周一至周五 **08:00**（UTC `0 0 * * 1-5`），另加 **09:30** 兜底；也可在仓库 Actions 页手动 `Run workflow`。
 - 流程：查 A 股交易日历 → 休市日跳过 → 更新到上一交易日并一次补齐漏跑 → 校验 → 提交 `data/current/history.json`、`public/api/history.json` 和运行状态 → 推送 `gh-pages` → GitHub Pages 自动重建。
-- 实测（2026-11-25）：工作流手动运行成功；`Probe data sources` 工作流在 GitHub 的 Ubuntu runner 上真实抓取 2026-11-23/24（177 只 ETF），补齐到 215 个交易日，证明 runner 能直连境内公开源。
+- 实测（2026-11-25）：工作流手动运行成功；`Probe data sources` 工作流在 GitHub 的 Ubuntu runner 上真实抓取 2026-11-23/24（177 只 ETF），当时的快照为 215 个交易日；同日已将历史扩展到 514 个交易日（2024-10-15 起）。
 - 失败时保留上一版数据，`data/current/ci-status.json` 记录 `outcome` 与日志尾部，Actions 运行标红；下一个交易日自动重试并补齐。
 - 注意：GitHub 定时任务可能延迟几分钟；GitHub Pages 的 CDN 在大陆各运营商可达性有差异，正式面向大陆用户时仍建议国内主机 + 备案域名。
 
