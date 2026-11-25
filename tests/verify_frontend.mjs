@@ -20,8 +20,8 @@ const eq = (actual, expected, message) => { assert.deepEqual(actual, expected, m
 
 // ---- 1. 数据完整性与口径
 eq(published.indices, seed.indices, "对外 JSON 的八指数顺序应与已验收快照一致");
-ok(records.length >= 215, `记录数应不少于 215，实际 ${records.length}`);
-eq(records[0].date, "2026-01-05", "历史起点应为 2026-01-05");
+ok(records.length >= 514, `记录数应不少于 514，实际 ${records.length}`);
+eq(records[0].date, "2024-10-15", "历史起点应为 2024-10-15（八个指数均有 ETF 份额的最早交易日）");
 ok(records.at(-1).date <= "2026-11-24", "最新数据日不应晚于快照截止日");
 ok(!("last_members" in published), "对外 JSON 不应泄露 last_members 内部字段");
 eq(published.meta.record_count, records.length, "meta.record_count 应与记录数一致");
@@ -43,9 +43,11 @@ for (let i = 0; i < records.length; i += 1) {
   if (i > 0) ok(row.date > records[i - 1].date, `${row.date} 日期递增`);
 }
 
-// ---- 2. 交接文档中的四个查询样例（窗口边界 + 图内首末数据日 + 数据点数）
+// ---- 2. 扩展后的查询样例（窗口边界 + 图内首末数据日 + 数据点数）
 const cases = [
-  { input: "2026-01-01", selected: "2026-01-05", start: "2026-01-01", end: "2026-02-25", first: "2026-01-05", last: "2026-02-25", rows: 32 },
+  { input: "2024-10-14", selected: "2024-10-15", start: "2024-10-15", end: "2024-12-09", first: "2024-10-15", last: "2024-12-09", rows: 40 },
+  { input: "2025-01-02", selected: "2025-01-02", start: "2024-12-06", end: "2025-01-30", first: "2024-12-06", last: "2025-01-27", rows: 36 },
+  { input: "2026-01-01", selected: "2025-12-31", start: "2025-12-04", end: "2026-01-28", first: "2025-12-04", last: "2026-01-28", rows: 38 },
   { input: "2026-07-24", selected: "2026-07-24", start: "2026-06-27", end: "2026-08-21", first: "2026-06-29", last: "2026-08-21", rows: 40 },
   { input: "2026-11-07", selected: "2026-11-06", start: "2026-09-30", end: "2026-11-24", first: "2026-09-30", last: "2026-11-24", rows: 35 },
   { input: "2026-11-24", selected: "2026-11-24", start: "2026-09-30", end: "2026-11-24", first: "2026-09-30", last: "2026-11-24", rows: 35 },
@@ -66,13 +68,13 @@ const mappings = [
   ["2026-10-06", "2026-09-30"], // 国庆假期内的周二（休市）
   ["2026-11-21", "2026-11-20"], // 周六
   ["2026-11-22", "2026-11-20"], // 周日
-  ["2025-12-31", "2026-01-05"], // 数据起点之前
+  ["2024-10-14", "2024-10-15"], // 数据起点之前
   ["2026-11-25", "2026-11-24"], // 尚无数据的最新日期
 ];
 for (const [input, expected] of mappings) {
   const window = displayWindow(records, input);
   eq(window.selected, expected, `${input} 应映射到 ${expected}`);
-  ok(window.start >= "2026-01-01", `${input} 窗口不应早于 2026-01-01`);
+  ok(window.start >= "2024-10-15", `${input} 窗口不应早于 2024-10-15`);
   const first = iso(window.start), last = iso(window.end);
   ok(last - first <= 55 * day, `${input} 窗口应不超过 56 个自然日`);
   ok(window.rows.every((row) => row.date >= window.start && row.date <= window.end), `${input} 窗口内记录应在区间内`);
@@ -125,5 +127,11 @@ for (const file of sourceFiles) {
   ok(hosts.every((host) => allowed.test(host)), `${file} 不应引用第三方资源：${hosts.filter((host) => !allowed.test(host)).join(", ")}`);
   ok(!/<script[^>]+src="(?!\.\/)/.test(text), `${file} 脚本应使用相对路径`);
 }
+
+// ---- 7. 页面底部的数据来源与风险提示
+const html = await readFile(path.join(root, "public/index.html"), "utf8");
+ok(html.includes("数据来源") && html.includes("风险提示"), "页面应包含数据来源和风险提示两个说明");
+ok(html.includes("仅为客观数据展示，仅供内部使用，不构成投资建议"), "风险提示应包含完整表述");
+ok(html.includes("上海证券交易所") && html.includes("深圳证券交易所") && html.includes("东方财富"), "数据来源应列出实际数据源");
 
 console.log(`前端逻辑与数据验收通过：${checks} 项检查，${records.length} 个交易日，${records[0].date} 至 ${records.at(-1).date}`);
