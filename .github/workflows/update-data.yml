@@ -1,0 +1,91 @@
+name: Update ETF data
+
+on:
+  schedule:
+    # 北京时间 08:00（UTC 00:00）与 09:30 兜底；脚本内部再按 A 股交易日历判断
+    - cron: "0 0 * * 1-5"
+    - cron: "30 1 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-data-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Update snapshot and published JSON
+        id: update
+        run: |
+          set -o pipefail
+          python update_daily.py \
+            --work data/current/history.json \
+            --published public/api/history.json \
+            --log-dir logs \
+            --backup-dir data/backups \
+            --retries 3 --retry-wait 120 2>&1 | tee /tmp/update.log
+
+      - name: Record run status
+        if: always()
+        run: |
+          python - <<'PY'
+          import datetime, json, pathlib
+          log = pathlib.Path("/tmp/update.log")
+          tail = log.read_text(encoding="utf-8", errors="replace").splitlines()[-10:] if log.exists() else []
+          pathlib.Path("data/current/ci-status.json").write_text(json.dumps({
+              "checked_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+              "outcome": "${{ steps.update.outcome }}",
+              "log_tail": tail,
+          }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+      - name: Commit status and data
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f data/current/ci-status.json
+          [ -f data/current/last_run.json ] && git add -f data/current/last_run.json || true
+          git add data/current/history.json public/api/history.json
+          if git diff --cached --quiet; then
+            echo "没有变化"
+          else
+            git commit -m "更新运行记录 $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push origin HEAD:main
+          fi
+
+      - name: Publish snapshot to gh-pages
+        if: steps.update.outcome == 'success'
+        run: |
+          git fetch --depth=1 origin gh-pages
+          git worktree add /tmp/pages origin/gh-pages
+          cp public/index.html public/style.css public/dashboard.js public/window.js /tmp/pages/
+          cp public/api/history.json /tmp/pages/api/history.json
+          cd /tmp/pages
+          git add -A
+          if git diff --cached --quiet; then
+            echo "页面无变化"
+          else
+            latest=$(python -c "import json;print(json.load(open('api/history.json',encoding='utf-8'))['meta']['through'])")
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "发布数据快照：${latest}"
+            git push origin HEAD:gh-pages
+          fi
+
+      - name: Fail when update failed
+        if: steps.update.outcome != 'success'
+        run: exit 1
