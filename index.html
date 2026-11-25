@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102844">
+  <title>宽基ETF规模跟踪</title>
+  <meta name="description" content="查看8个宽基指数所跟踪ETF的总规模与日度变动，支持自2026年起按日期浏览。">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./dashboard.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="shell intro">
+      <div>
+        <h1>宽基ETF规模跟踪</h1>
+        <p>8个指数的ETF总规模与日度变动</p>
+      </div>
+      <div class="asof"><span>数据截至</span><strong id="as-of">正在加载</strong><span id="published" class="published"></span></div>
+    </div>
+  </header>
+  <main class="shell">
+    <section class="toolbar" aria-label="日期选择">
+      <div class="date-controls">
+        <label for="date">查看日期</label>
+        <input id="date" type="date" min="2026-01-01" disabled>
+        <button id="latest" type="button" disabled>回到最新</button>
+      </div>
+      <div id="range" class="range" role="status" aria-live="polite">正在读取交易日数据…</div>
+    </section>
+    <div class="legend" aria-label="图例">
+      <span><i class="bar-key"></i>日度规模变动（左轴）</span>
+      <span><i class="line-key"></i>ETF总规模（右轴）</span>
+      <span><i class="date-key"></i>查询日期</span>
+      <span class="unit">单位：亿元</span>
+    </div>
+    <section id="charts" class="charts" aria-label="8个宽基指数图表"></section>
+    <section class="method" aria-labelledby="method-title">
+      <h2 id="method-title">数据说明</h2>
+      <p>以沪深交易所披露的场内ETF总份额和东方财富披露的同日单位净值计算单只基金规模，再按跟踪指数汇总。统计范围包括境内上市的ETF及增强ETF，ETF联接基金和其他指数的产品不计入。</p>
+      <p>日度规模变动为当日总规模减去上一交易日总规模，包含净值变化与份额变化。因纳入范围和统计口径不同，数值可能与其他数据服务有差异。</p>
+      <p>图表按实际交易日等距排列，展示所选日期附近的56个自然日，靠近边界时向另一侧补足。休市日或当日数据尚未收录时，选中此前最近有数据的交易日。深市以次日早间确认的份额为准，页面以顶部标注的数据日期为准。</p>
+      <p>本页为静态只读页面，图表数据由服务器在每个A股交易日北京时间08:00后更新，访客无需登录或安装任何插件。</p>
+      <p class="source-links"><a href="https://www.sse.com.cn/market/funddata/volumn/etfvolumn/" target="_blank" rel="noopener">上交所</a><a href="https://www.szse.cn/market/fund/volume/etf/index.html" target="_blank" rel="noopener">深交所</a><a href="https://fund.eastmoney.com/" target="_blank" rel="noopener">东方财富基金</a><a href="https://www.csindex.com.cn/" target="_blank" rel="noopener">中证指数</a><a href="https://www.cnindex.com.cn/" target="_blank" rel="noopener">国证指数</a></p>
+    </section>
+  </main>
+</body>
+</html>
