@@ -95,7 +95,9 @@ jobs:
         if: steps.update.outcome == 'success'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST "repos/${{ github.repository }}/pages/builds"
+        run: |
+          # 推送 gh-pages 可能已自动触发构建，重复请求返回 409 时不算失败。
+          gh api --method POST "repos/${{ github.repository }}/pages/builds" || echo "Pages 构建已在排队或进行中"
 
       - name: Fail when update failed
         if: steps.update.outcome != 'success'
