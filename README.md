@@ -106,6 +106,15 @@ python tests/test_update_daily.py                        # 21 项更新/发布�
 [国证指数](https://www.cnindex.com.cn/) ·
 [东方财富基金](https://fund.eastmoney.com/)
 
+## 自动更新（GitHub Actions，已配置）
+
+- 工作流：`.github/workflows/update-data.yml`
+- 触发：北京时间周一至周五 **08:00**（UTC `0 0 * * 1-5`），另加 **09:30** 兜底；也可在仓库 Actions 页手动 `Run workflow`。
+- 流程：查 A 股交易日历 → 休市日跳过 → 更新到上一交易日并一次补齐漏跑 → 校验 → 提交 `data/current/history.json`、`public/api/history.json` 和运行状态 → 推送 `gh-pages` → GitHub Pages 自动重建。
+- 实测（2026-11-25）：工作流手动运行成功；`Probe data sources` 工作流在 GitHub 的 Ubuntu runner 上真实抓取 2026-11-23/24（177 只 ETF），补齐到 215 个交易日，证明 runner 能直连境内公开源。
+- 失败时保留上一版数据，`data/current/ci-status.json` 记录 `outcome` 与日志尾部，Actions 运行标红；下一个交易日自动重试并补齐。
+- 注意：GitHub 定时任务可能延迟几分钟；GitHub Pages 的 CDN 在大陆各运营商可达性有差异，正式面向大陆用户时仍建议国内主机 + 备案域名。
+
 ## 固定地址（GitHub Pages）
 
 - 页面：**https://huangqizhuo-ecnu.github.io/wide-etf-dashboard/**
