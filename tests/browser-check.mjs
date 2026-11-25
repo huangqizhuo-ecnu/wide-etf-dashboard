@@ -131,6 +131,8 @@ try {
 
   const structure = await evaluate(`(() => ({
     titles: [...document.querySelectorAll(".chart h2")].map((node) => node.textContent),
+    notices: [...document.querySelectorAll(".notice h2")].map((node) => node.textContent),
+    risk: document.querySelector(".notice.risk")?.textContent ?? "",
     pickerMin: document.getElementById("date").min,
     pickerMax: document.getElementById("date").max,
     pickerValue: document.getElementById("date").value,
@@ -139,7 +141,9 @@ try {
     canvasLabels: [...document.querySelectorAll("canvas")].map((node) => node.getAttribute("aria-label")),
   }))()`);
   assert.deepEqual(structure.titles, ["沪深300", "上证50", "创业板指", "科创50", "中证A500", "中证500", "中证1000", "中证2000"], "八张图标题顺序");
-  assert.equal(structure.pickerMin, "2026-01-01", "可选起始日");
+  assert.deepEqual(structure.notices, ["数据来源", "风险提示"], "页面底部应有数据来源和风险提示");
+  assert.ok(structure.risk.includes("仅为客观数据展示，仅供内部使用，不构成投资建议"), "风险提示文字应完整显示");
+  assert.equal(structure.pickerMin, "2024-10-15", "可选起始日");
   assert.equal(structure.pickerMax, beijingToday > latest ? beijingToday : latest, "可选截止日应为北京时间当天");
   assert.equal(structure.pickerValue, latest, "默认选中最新交易日");
   assert.equal(structure.columns, 2, "桌面应为两列");
@@ -196,6 +200,22 @@ try {
   assert.ok(holidayPurple.count > 40, "休市日查询仍应有紫色标记");
   const holidayShot = await screenshot("dashboard-holiday-2026-10-03.png");
 
+  const earlyState = await evaluate(`(() => {
+    const picker = document.getElementById("date");
+    picker.value = "2024-10-15";
+    picker.dispatchEvent(new Event("change"));
+    return {
+      range: document.getElementById("range").textContent,
+      labels: [...document.querySelectorAll("canvas")].map((node) => node.getAttribute("aria-label")),
+    };
+  })()`);
+  assert.equal(earlyState.range, expectedRange("2024-10-15"), "扩展后的最早日期应可查询");
+  assert.ok(earlyState.range.startsWith("2024-10-15 至 2024-12-09"), "最早日期窗口应为 40 个交易日");
+  assert.ok(earlyState.labels.every((label) => label.includes("2024-10-15")), "八张图应同步切换到期初日期");
+  const earlyPurple = await purple();
+  assert.ok(earlyPurple.count > 40, "期初日期仍应有紫色标记");
+  const earlyShot = await screenshot("dashboard-early-2024-10-15.png");
+
   const first = await evaluate(`(() => {
     const picker = document.getElementById("date");
     picker.value = "2026-01-01";
@@ -243,8 +263,9 @@ try {
     tooltip: tooltip.text.replaceAll("\n", " | "),
     desktop: desktopShot,
     holiday: holidayShot,
+    early: earlyShot,
     mobile: mobileShot,
-    screenshots: [desktopShot, holidayShot, mobileShot],
+    screenshots: [desktopShot, holidayShot, earlyShot, mobileShot],
   }, null, 2));
 } finally {
   await cleanup();
