@@ -1,0 +1,11 @@
+# 宽基ETF看板每日更新（cron 方案，与 systemd timer 二选一）
+# 安装：以 root 执行
+#   install -m 0644 deploy/cron.example /etc/cron.d/etf-dashboard
+# cron 的 CRON_TZ 需要 cronie 支持；Debian/Ubuntu 自带的 cron 若忽略该行，
+# 请先将服务器时区设为 Asia/Shanghai（timedatectl set-timezone Asia/Shanghai）。
+# 注意：/etc/cron.d 的命令必须写在同一行，不能使用行尾反斜杠续行。
+CRON_TZ=Asia/Shanghai
+SHELL=/bin/sh
+PATH=/usr/local/bin:/usr/bin:/bin
+
+0 8 * * 1-5 etf /usr/bin/python3 /opt/etf-cn-dashboard/update_daily.py --work /var/lib/etf-dashboard/current/history.json --published /var/www/etf-dashboard/api/history.json --log-dir /var/lib/etf-dashboard/logs --backup-dir /var/lib/etf-dashboard/backups --retries 3 --retry-wait 120 >> /var/lib/etf-dashboard/logs/cron.log 2>&1

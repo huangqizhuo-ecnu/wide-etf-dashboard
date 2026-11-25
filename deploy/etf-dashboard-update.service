@@ -1,0 +1,30 @@
+# 宽基ETF看板每日更新（systemd）
+# 安装：见 部署说明.md，把本文件复制为 /etc/systemd/system/etf-dashboard-update.service
+[Unit]
+Description=宽基ETF看板数据更新（A股交易日北京时间08:00）
+Documentation=file:///opt/etf-cn-dashboard/部署说明.md
+Wants=network-online.target
+After=network-online.target nginx.service
+
+[Service]
+Type=oneshot
+User=etf
+Group=etf
+WorkingDirectory=/opt/etf-cn-dashboard
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+UMask=0022
+# 数据未齐时脚本会保留上一版并以非零码退出；有界重试在脚本内部完成。
+ExecStart=/usr/bin/python3 /opt/etf-cn-dashboard/update_daily.py \
+    --work /var/lib/etf-dashboard/current/history.json \
+    --published /var/www/etf-dashboard/api/history.json \
+    --log-dir /var/lib/etf-dashboard/logs \
+    --backup-dir /var/lib/etf-dashboard/backups \
+    --retries 3 --retry-wait 120
+# 可选：发布后通过看板地址回读核对（需服务器能解析并信任本站 HTTPS）。
+# ExecStart=/usr/bin/python3 /opt/etf-cn-dashboard/update_daily.py --work /var/lib/etf-dashboard/current/history.json --published /var/www/etf-dashboard/api/history.json --log-dir /var/lib/etf-dashboard/logs --backup-dir /var/lib/etf-dashboard/backups --readback-url https://etf.example.com/api/history
+TimeoutStartSec=2h
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

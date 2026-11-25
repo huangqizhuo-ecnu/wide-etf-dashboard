@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+logs/update.log
+logs/update.jsonl
+data/backups/history-*.json
+data/current/.update.lock
+data/current/last_run.json
+tests/artifacts/
+tools/
+.github-token

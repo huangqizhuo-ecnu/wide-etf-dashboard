@@ -1,0 +1,18 @@
+# 宽基ETF看板每日更新定时器（systemd）
+# 安装：复制为 /etc/systemd/system/etf-dashboard-update.timer，然后
+#       systemctl daemon-reload && systemctl enable --now etf-dashboard-update.timer
+[Unit]
+Description=每个A股交易日北京时间08:00更新宽基ETF看板数据
+Documentation=file:///opt/etf-cn-dashboard/部署说明.md
+
+[Timer]
+# 显式指定时区，避免服务器使用 UTC 时在错误的时间触发（systemd 235+ 支持）。
+OnCalendar=Mon..Fri 08:00 Asia/Shanghai
+# 若 systemd 版本不支持时区后缀，确认 timedatectl 为 Asia/Shanghai 后改用：
+# OnCalendar=Mon..Fri 08:00
+Persistent=true
+AccuracySec=1min
+Unit=etf-dashboard-update.service
+
+[Install]
+WantedBy=timers.target
