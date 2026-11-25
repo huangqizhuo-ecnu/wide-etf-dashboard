@@ -1,0 +1,60 @@
+name: Probe data sources (manual)
+
+# 仅手动触发：用截断到 2026-11-20 的临时快照补齐 2026-11-23/24，
+# 验证 GitHub 的 runner 能否访问境内公开数据源。不修改仓库数据。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONIOENCODING: utf-8
+      LANG: C.UTF-8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare truncated snapshot
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          seed = json.loads(pathlib.Path("data/history.json").read_text(encoding="utf-8"))
+          seed["records"] = seed["records"][:-2]
+          pathlib.Path("/tmp/probe-work.json").write_text(json.dumps(seed, ensure_ascii=False), encoding="utf-8")
+          print("probe snapshot last:", seed["records"][-1]["date"])
+          PY
+
+      - name: Fetch two trading days from public sources
+        run: |
+          set -o pipefail
+          python update_daily.py \
+            --work /tmp/probe-work.json \
+            --published /tmp/probe-published.json \
+            --log-dir /tmp/probe-logs \
+            --backup-dir /tmp/probe-backups \
+            --through 2026-11-24 \
+            --retries 2 --retry-wait 30 --direct 2>&1 | tee /tmp/probe.log
+
+      - name: Report
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          path = pathlib.Path("/tmp/probe-work.json")
+          if path.exists():
+              data = json.loads(path.read_text(encoding="utf-8"))
+              print("fetched records:", len(data["records"]))
+              print("last dates:", [row["date"] for row in data["records"][-3:]])
+              print("last values:", data["records"][-1]["values"][:2])
+          PY
