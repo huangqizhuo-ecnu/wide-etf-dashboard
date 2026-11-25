@@ -1,5 +1,5 @@
 const DAY = 86_400_000;
-export const START = "2026-01-01";
+export const START = "2024-10-15";
 const stamp = (date) => Date.parse(date + "T00:00:00Z");
 const iso = (time) => new Date(time).toISOString().slice(0, 10);
 

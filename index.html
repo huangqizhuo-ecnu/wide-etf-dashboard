@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#102844">
   <title>宽基ETF规模跟踪</title>
-  <meta name="description" content="查看8个宽基指数所跟踪ETF的总规模与日度变动，支持自2026年起按日期浏览。">
+  <meta name="description" content="查看8个宽基指数所跟踪ETF的总规模与日度变动，支持自2024年10月起按日期浏览。">
   <link rel="stylesheet" href="./style.css">
   <script type="module" src="./dashboard.js"></script>
 </head>
@@ -23,7 +23,7 @@
     <section class="toolbar" aria-label="日期选择">
       <div class="date-controls">
         <label for="date">查看日期</label>
-        <input id="date" type="date" min="2026-01-01" disabled>
+        <input id="date" type="date" min="2024-10-15" disabled>
         <button id="latest" type="button" disabled>回到最新</button>
       </div>
       <div id="range" class="range" role="status" aria-live="polite">正在读取交易日数据…</div>
@@ -41,7 +41,18 @@
       <p>日度规模变动为当日总规模减去上一交易日总规模，包含净值变化与份额变化。因纳入范围和统计口径不同，数值可能与其他数据服务有差异。</p>
       <p>图表按实际交易日等距排列，展示所选日期附近的56个自然日，靠近边界时向另一侧补足。休市日或当日数据尚未收录时，选中此前最近有数据的交易日。深市以次日早间确认的份额为准，页面以顶部标注的数据日期为准。</p>
       <p>本页为静态只读页面，图表数据由服务器在每个A股交易日北京时间08:00后更新，访客无需登录或安装任何插件。</p>
+    </section>
+    <section class="notice" aria-labelledby="source-title">
+      <h2 id="source-title">数据来源</h2>
+      <p>上海证券交易所、深圳证券交易所披露的场内ETF总份额，东方财富基金披露的同日单位净值，以及中证指数、国证指数披露的跟踪产品名单。</p>
+      <p>单只ETF规模＝同日总份额×单位净值，按跟踪指数汇总后换算为亿元；日度变动＝当日总规模－上一交易日总规模。统计境内沪深上市的ETF及增强ETF，不含ETF联接基金。</p>
+      <p>数据在每个A股交易日北京时间08:00后自动更新至上一交易日；源站发布延迟时页面可能滞后，以页面顶部标注的数据日期为准。</p>
       <p class="source-links"><a href="https://www.sse.com.cn/market/funddata/volumn/etfvolumn/" target="_blank" rel="noopener">上交所</a><a href="https://www.szse.cn/market/fund/volume/etf/index.html" target="_blank" rel="noopener">深交所</a><a href="https://fund.eastmoney.com/" target="_blank" rel="noopener">东方财富基金</a><a href="https://www.csindex.com.cn/" target="_blank" rel="noopener">中证指数</a><a href="https://www.cnindex.com.cn/" target="_blank" rel="noopener">国证指数</a></p>
+    </section>
+    <section class="notice risk" aria-labelledby="risk-title">
+      <h2 id="risk-title">风险提示</h2>
+      <p><strong>本页面仅为客观数据展示，仅供内部使用，不构成投资建议。</strong></p>
+      <p>数据来自公开渠道，可能存在延迟、缺失、口径差异或计算误差，请以交易所及基金管理人的正式披露为准。任何人据此作出的投资决策及后果自行承担，本页面及维护者不承担任何责任。</p>
     </section>
   </main>
 </body>
