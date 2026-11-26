@@ -1,8 +1,11 @@
 {
-  "status": "up_to_date",
-  "through": "2026-11-24",
+  "status": "published",
+  "through": "2026-11-25",
   "attempts": 1,
-  "latest": "2026-11-24",
-  "duration_s": 3.5,
+  "latest": "2026-11-25",
+  "published_at": "2026-11-26 09:20",
+  "backup": "data/backups/history-20261126T092009.json",
+  "record_count": 515,
+  "duration_s": 74.0,
   "log": "logs/update.log"
 }
