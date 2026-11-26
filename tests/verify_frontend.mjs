@@ -22,7 +22,7 @@ const eq = (actual, expected, message) => { assert.deepEqual(actual, expected, m
 eq(published.indices, seed.indices, "对外 JSON 的八指数顺序应与已验收快照一致");
 ok(records.length >= 514, `记录数应不少于 514，实际 ${records.length}`);
 eq(records[0].date, "2024-10-15", "历史起点应为 2024-10-15（八个指数均有 ETF 份额的最早交易日）");
-ok(records.at(-1).date <= "2026-11-24", "最新数据日不应晚于快照截止日");
+ok(records.at(-1).date <= new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai" }).format(new Date()), "最新数据日不应晚于北京时间当天");
 ok(!("last_members" in published), "对外 JSON 不应泄露 last_members 内部字段");
 eq(published.meta.record_count, records.length, "meta.record_count 应与记录数一致");
 eq(published.meta.through, records.at(-1).date, "meta.through 应等于最新数据日");
@@ -49,8 +49,6 @@ const cases = [
   { input: "2025-01-02", selected: "2025-01-02", start: "2024-12-06", end: "2025-01-30", first: "2024-12-06", last: "2025-01-27", rows: 36 },
   { input: "2026-01-01", selected: "2025-12-31", start: "2025-12-04", end: "2026-01-28", first: "2025-12-04", last: "2026-01-28", rows: 38 },
   { input: "2026-07-24", selected: "2026-07-24", start: "2026-06-27", end: "2026-08-21", first: "2026-06-29", last: "2026-08-21", rows: 40 },
-  { input: "2026-11-07", selected: "2026-11-06", start: "2026-09-30", end: "2026-11-24", first: "2026-09-30", last: "2026-11-24", rows: 35 },
-  { input: "2026-11-24", selected: "2026-11-24", start: "2026-09-30", end: "2026-11-24", first: "2026-09-30", last: "2026-11-24", rows: 35 },
 ];
 for (const item of cases) {
   const window = displayWindow(records, item.input);
@@ -63,13 +61,17 @@ for (const item of cases) {
 }
 
 // ---- 3. 休市日、周末、边界映射
+const latestDate = records.at(-1).date;
+const nextDay = new Date(`${latestDate}T00:00:00Z`);
+nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+const afterLatest = nextDay.toISOString().slice(0, 10);
 const mappings = [
   ["2026-10-03", "2026-09-30"], // 国庆假期内的周六
   ["2026-10-06", "2026-09-30"], // 国庆假期内的周二（休市）
   ["2026-11-21", "2026-11-20"], // 周六
   ["2026-11-22", "2026-11-20"], // 周日
   ["2024-10-14", "2024-10-15"], // 数据起点之前
-  ["2026-11-25", "2026-11-24"], // 尚无数据的最新日期
+  [afterLatest, latestDate], // 尚无数据的最新日期
 ];
 for (const [input, expected] of mappings) {
   const window = displayWindow(records, input);
