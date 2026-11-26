@@ -69,6 +69,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm --cached --ignore-unmatch data/current/last_run.json >/dev/null 2>&1 || true
           git add -f data/current/ci-status.json
           git add data/current/history.json public/api/history.json
           if git diff --cached --quiet; then
