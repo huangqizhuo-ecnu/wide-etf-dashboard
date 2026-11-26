@@ -1,8 +1,0 @@
-{
-  "status": "up_to_date",
-  "through": "2026-11-25",
-  "attempts": 1,
-  "latest": "2026-11-25",
-  "duration_s": 5.3,
-  "log": "logs/update.log"
-}
