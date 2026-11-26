@@ -116,11 +116,15 @@ python tests/test_update_daily.py                        # 21 项更新/发布�
 ## 自动更新（GitHub Actions，已配置）
 
 - 工作流：`.github/workflows/update-data.yml`
-- 触发：北京时间周一至周五 **08:00**（UTC `0 0 * * 1-5`），另加 **09:30** 兜底；也可在仓库 Actions 页手动 `Run workflow`。
+- 触发：北京时间周一至周五 **07:45** 先跑，**08:30、09:00** 再兜底（UTC 分别为前一天 23:45、00:30、01:00）；单次运行最多重试 9 次、每次间隔 5 分钟，覆盖到 09:15 左右，确保在后一个交易日开盘前完成。
+- 本地兜底：2026-11-26 观察到 GitHub 的 `schedule` 事件完全未产生（连每 5 分钟一次的探针工作流也没有运行），因此在本机增加了 Windows 计划任务 `ETF-Dashboard-Dispatch`，每个交易日 07:45/08:30/09:00 调用 `workflow_dispatch`；PC 开机并登录时生效，与 GitHub 侧定时互为备份。
+  - 安装/移除：`deploy/install-dispatch-task.ps1` / `deploy/uninstall-dispatch-task.ps1`
+  - 令牌用 Windows DPAPI 加密保存在 `%LOCALAPPDATA%\etf-dashboard\dispatch-token.xml`，仓库内没有令牌；删除该文件并吊销令牌即可停用兜底。
+- 2026-11-26 实测：08:00 定时事件未产生；11-25 数据于 09:20 手动补跑到线上（515 个交易日），本地兜底任务随后触发成功。
 - 流程：查 A 股交易日历 → 休市日跳过 → 更新到上一交易日并一次补齐漏跑 → 校验 → 提交 `data/current/history.json`、`public/api/history.json` 和运行状态 → 推送 `gh-pages` → GitHub Pages 自动重建。
 - 实测（2026-11-25）：工作流手动运行成功；`Probe data sources` 工作流在 GitHub 的 Ubuntu runner 上真实抓取 2026-11-23/24（177 只 ETF），当时的快照为 215 个交易日；同日已将历史扩展到 514 个交易日（2024-10-15 起）。
 - 失败时保留上一版数据，`data/current/ci-status.json` 记录 `outcome` 与日志尾部，Actions 运行标红；下一个交易日自动重试并补齐。
-- 注意：GitHub 定时任务可能延迟几分钟；GitHub Pages 的 CDN 在大陆各运营商可达性有差异，正式面向大陆用户时仍建议国内主机 + 备案域名。
+- 注意：GitHub 定时任务可能延迟；GitHub Pages 的 CDN 在大陆各运营商可达性有差异，正式面向大陆用户时仍建议国内主机 + 备案域名。
 
 ## 固定地址（GitHub Pages）
 
