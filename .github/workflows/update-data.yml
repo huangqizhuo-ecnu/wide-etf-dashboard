@@ -1,6 +1,8 @@
 name: Update ETF data
 
 on:
+  push:
+    branches: [main]
   schedule:
     # 北京时间 07:45 先跑；08:30、09:00 再兜底（UTC 分别为前一天 23:45、00:30、01:00）
     - cron: "45 23 * * 0-4"
