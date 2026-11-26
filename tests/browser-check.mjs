@@ -17,6 +17,8 @@ const artifacts = path.join(here, "artifacts");
 const dashboard = process.env.DASHBOARD_URL ?? "http://127.0.0.1:8080/";
 const port = Number(process.env.CDP_PORT ?? 9333);
 const records = JSON.parse(await readFile(path.join(root, "public/api/history.json"), "utf8")).records;
+const latest = records.at(-1).date;
+const beijingToday = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 const candidates = [
   process.env.CHROME_PATH,
@@ -114,14 +116,12 @@ try {
       range: document.getElementById("range")?.textContent,
       published: document.getElementById("published")?.textContent,
     }))()`);
-    return state.readyState === "complete" && state.charts === 8 && state.asOf === "2026-11-24" ? state : null;
+    return state.readyState === "complete" && state.charts === 8 && state.asOf === latest ? state : null;
   }, 40000);
   assert.equal(ready.charts, 8, "应有 8 张图");
-  assert.equal(ready.asOf, "2026-11-24", "数据截至日应为 2026-11-24");
+  assert.equal(ready.asOf, latest, `数据截至日应为 ${latest}`);
   assert.match(ready.published, /更新于 2026-\d{2}-\d{2} \d{2}:\d{2}（北京时间）/, "应显示发布时间");
 
-  const latest = records.at(-1).date;
-  const beijingToday = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   const expectedRange = (chosen) => {
     const window = displayWindow(records, chosen);
     const mapped = chosen === window.selected ? "" : ` · 对应交易日 ${window.selected}`;
