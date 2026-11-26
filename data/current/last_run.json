@@ -3,6 +3,6 @@
   "through": "2026-11-25",
   "attempts": 1,
   "latest": "2026-11-25",
-  "duration_s": 5.9,
+  "duration_s": 3.8,
   "log": "logs/update.log"
 }
