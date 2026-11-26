@@ -116,11 +116,11 @@ python tests/test_update_daily.py                        # 21 项更新/发布�
 ## 自动更新（GitHub Actions，已配置）
 
 - 工作流：`.github/workflows/update-data.yml`
-- 触发：北京时间周一至周五 **07:45** 先跑，**08:30、09:00** 再兜底（UTC 分别为前一天 23:45、00:30、01:00）；单次运行最多重试 9 次、每次间隔 5 分钟，覆盖到 09:15 左右，确保在后一个交易日开盘前完成。
-- 本地兜底：2026-11-26 观察到 GitHub 的 `schedule` 事件完全未产生（连每 5 分钟一次的探针工作流也没有运行），因此在本机增加了 Windows 计划任务 `ETF-Dashboard-Dispatch`，每个交易日 07:45/08:30/09:00 调用 `workflow_dispatch`；PC 开机并登录时生效，与 GitHub 侧定时互为备份。
-  - 安装/移除：`deploy/install-dispatch-task.ps1` / `deploy/uninstall-dispatch-task.ps1`
-  - 令牌用 Windows DPAPI 加密保存在 `%LOCALAPPDATA%\etf-dashboard\dispatch-token.xml`，仓库内没有令牌；删除该文件并吊销令牌即可停用兜底。
-- 2026-11-26 实测：08:00 定时事件未产生；11-25 数据于 09:20 手动补跑到线上（515 个交易日），本地兜底任务随后触发成功。
+- 外部定时（当前主用）：**cron-job.org** 每个交易日 07:45 / 08:30 / 09:00 调用 GitHub 的 `workflow_dispatch`，不依赖本机开机。三个任务在 2026-11-26 测试运行均返回 204，对应 GitHub Actions 运行全部成功。
+- GitHub 自带定时：北京时间 07:45、08:30、09:00（UTC 前一天 23:45、00:30、01:00），单次最多重试 9 次、每次 5 分钟；与 cron-job.org 互为备份，谁先成功谁更新。
+- 本机 Windows 任务 `ETF-Dashboard-Dispatch` 只用于 2026-11-26 排查 GitHub 定时未触发的问题；cron-job.org 验证后已移除。`deploy/install-dispatch-task.ps1` 保留为可选备用。
+- 令牌：cron-job.org 使用专用 fine-grained token `etf-dashboard-cron`（仅 `Actions: Read and write`，90 天到期需更换）；仓库和本机不保存该令牌。本机旧的 classic token 已删除，并应在 GitHub 设置中吊销。
+- 2026-11-26 实测：08:00 的 GitHub `schedule` 事件未产生；11-25 数据于 09:20 手动补跑；随后 cron-job.org 三次测试全部成功（03:00–03:03 UTC，对应 11:00–11:03 北京时间）。
 - 流程：查 A 股交易日历 → 休市日跳过 → 更新到上一交易日并一次补齐漏跑 → 校验 → 提交 `data/current/history.json`、`public/api/history.json` 和运行状态 → 推送 `gh-pages` → GitHub Pages 自动重建。
 - 实测（2026-11-25）：工作流手动运行成功；`Probe data sources` 工作流在 GitHub 的 Ubuntu runner 上真实抓取 2026-11-23/24（177 只 ETF），当时的快照为 215 个交易日；目前历史已扩展到 515 个交易日（2024-10-15 至 2026-11-25）。
 - 失败时保留上一版数据，`data/current/ci-status.json` 记录 `outcome` 与日志尾部，Actions 运行标红；下一个交易日自动重试并补齐。
